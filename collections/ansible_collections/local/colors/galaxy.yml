@@ -1,0 +1,7 @@
+namespace: apdev
+description: sample collection for learning
+name: colors
+version: 1.0.0
+readme: README.md
+authors:
+- your name <example@domain.com>

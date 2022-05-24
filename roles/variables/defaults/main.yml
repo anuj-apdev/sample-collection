@@ -1,0 +1,8 @@
+product_version: "7.1.x"
+default_var: "default_variable"
+combined_def: "{{ vars_var }} -> {{ default_var }} -> {product_version }}"
+archive_destination_path: "/opt/prod"
+config_base_path: "{{ (archive_destination_path | regex_replace('\\/$','')) if installation_method == 'archive' else '/' }}"
+binary_base_path: 
+ksql_jolokia_config: "{{ (config_base_path,((package_version is version('5.5.0', '>=')) | ternary('/etc/ksqldb/ksql_jolokia.properties' , '/etc/ksql/ksql_jolokia.properties'))) | path_join }}"
+fips_path: "{{ (binary_base_path, 'share/java/kafka/bc-fips-*.jar') | path_join }}"

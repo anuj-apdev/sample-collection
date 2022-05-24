@@ -1,0 +1,94 @@
+---
+- hosts: lc
+  vars:
+    my_color_choice: 'blue'
+
+  tasks:
+    - name: 'Verify that {{ my_color_choice }} is blue'
+      assert:
+        that: my_color_choice is local.colors.blue
+    
+    - name : check path join
+      debug:
+        msg: "{{ ('/etc', my_color_choice, ('something-', my_color_choice)|join ) | path_join }}"
+    
+    - name : Check path join again
+      debug:
+        msg: "{{ (config_base_path, (('something-', my_color_choice)|join if installation_method == 'archive' else '/' ), 'etc/something') | path_join }}"
+
+    - name: Thats it
+      pause:
+        prompt: "Done"
+    
+    - name : List groups
+      debug:
+        msg: 
+        - "{{ groups }}"
+
+    - name : List groups of connect
+      debug:
+        msg: 
+        - "{{ groups['connect'] }}"
+
+    - name : List hostvars
+      debug:
+        msg: 
+        - "{{ hostvars['host2'].group_names | difference ('connect, broker, ksql') }}"
+
+    - name: Register Kafka Connect Subgroups
+      set_fact: subgroups="{{ ((subgroups | default([])) + hostvars[item].group_names) | difference('connect') }}"
+      with_items: "{{ groups['connect'] }}"
+
+    - name: Print CP version before var loading
+      debug:
+        msg: "CP version before loading is: -> {{ product_version }}"
+
+    - name: Import variables
+      import_role:
+        name: variables
+
+    - name: Print CP version after var loading
+      debug:
+        msg: 
+          - "CP version is: {{ product_version }}"
+          - "CLI version is: {{ vars.cli_version }}"
+          - "Combined default: {{ combined_def }}"
+          - "Combined vars: {{ combined_vars }}"
+    
+    - name: debug1
+      debug:
+        msg: "{{ subgroups }}"
+
+    - name: debug2
+      debug:
+        msg: "{{ groups[item][0] }}"
+      loop: "{{ subgroups }}"
+
+    - name: debug3
+      debug:
+        msg: "{{ hostvars[groups[item][1]] }}"
+      loop: "{{ subgroups }}"
+      
+    - name: debug4
+      debug:
+        msg: "{{ hostvars[groups[item][0]].connectors }}"
+      loop: "{{ subgroups }}"
+      
+    - name: debug5
+      debug:
+        msg: "{{ hostvars[groups[item][0]].connect_connectors }}"
+      loop: "{{ subgroups }}"
+
+    - name: debug6
+      debug:
+        msg: 
+        - "KSQL Jolokia path -> {{ ksql_jolokia_config }}"
+        - "Binary Base path -> {{ binary_base_path }}"
+        - FIPS Path {{ fips_path }}
+      loop: "{{ subgroups }}"
+  
+    - name: debug7
+      debug:
+        msg: 
+        - "playbook-dir -> {{ playbook_dir }}"
+        - "parent dir -> {{ playbook_dir | dirname }}"
